@@ -1,0 +1,36 @@
+import requests
+from telegram.ext import Updater, CommandHandler
+
+# Замените 'YOUR_TELEGRAM_BOT_TOKEN' на токен вашего Telegram-бота
+BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+# Замените 'YOUR_OPENWEATHERMAP_API_KEY' на ваш ключ API от OpenWeatherMap
+API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY'
+CITY = 'Sochi'
+
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот для показа погоды. Введите /weather для получения текущей погоды в Сочи.")
+
+def get_weather(update, context):
+    url = f'http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        weather_description = data['weather'][0]['description']
+        temperature = data['main']['temp']
+        humidity = data['main']['humidity']
+        wind_speed = data['wind']['speed']
+        message = f"Погода в Сочи:\n\nОписание: {weather_description}\nТемпература: {temperature}°C\nВлажность: {humidity}%\nСкорость ветра: {wind_speed} м/с"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Не удалось получить информацию о погоде в Сочи.")
+
+updater = Updater(token=BOT_TOKEN, use_context=True)
+dispatcher = updater.dispatcher
+
+start_handler = CommandHandler('start', start)
+weather_handler = CommandHandler('weather', get_weather)
+
+dispatcher.add_handler(start_handler)
+dispatcher.add_handler(weather_handler)
+
+updater.start_polling()
